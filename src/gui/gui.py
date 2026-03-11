@@ -13,7 +13,7 @@ class App:
         self.root = root
         self.root.title("MI Spēle (akmeņi)")
 
-        # Spēles stāvoklis (sākumā nav)
+        # Spēles stāvoklis
         self.state = None
 
         # UI mainīgie
@@ -22,7 +22,7 @@ class App:
         self.var_starter = tk.StringVar(value="human")
         self.var_depth = tk.IntVar(value=6)
 
-        # Augša: iestatījumi
+        # Augšējais bloks ar iestatījumiem
         frm = tk.Frame(root)
         frm.pack(padx=10, pady=10)
 
@@ -41,11 +41,11 @@ class App:
         tk.Button(frm, text="Sākt spēli", command=self.start_game).grid(row=2, column=0, pady=(8, 0), sticky="we")
         tk.Button(frm, text="Restart", command=self.reset_game).grid(row=2, column=1, pady=(8, 0), sticky="we")
 
-        # Vidus: informācija
+        # Informācijas lauks
         self.lbl_info = tk.Label(root, text="Nospied 'Sākt spēli'", justify="left")
         self.lbl_info.pack(padx=10, pady=10, anchor="w")
 
-        # Apakša: gājienu pogas
+        # Pogas cilvēka gājieniem
         frm2 = tk.Frame(root)
         frm2.pack(padx=10, pady=10)
 
@@ -58,7 +58,11 @@ class App:
         self.set_buttons_enabled(False)
 
     def set_buttons_enabled(self, enabled):
-        state = "normal" if enabled else "disabled"
+        if enabled:
+            state = "normal"
+        else:
+            state = "disabled"
+
         self.btn_take2.config(state=state)
         self.btn_take3.config(state=state)
 
@@ -66,13 +70,20 @@ class App:
         stones = int(self.var_stones.get())
         starter = self.var_starter.get()
 
-        # Izveidojam sākuma stāvokli
+        # Izveidojam sākuma spēles stāvokli
         self.state = create_state(stones, starter)
 
-        # Atjaunojam skatu
+        # Ja lietotājs ievadīja nepareizu akmeņu skaitu
+        if self.state is None:
+            self.lbl_info.config(text="Kļūda: akmeņu skaitam jābūt no 50 līdz 70")
+            self.set_buttons_enabled(False)
+            messagebox.showerror("Kļūda", "Akmeņu skaitam jābūt no 50 līdz 70")
+            return
+
+        # Atjaunojam loga informāciju
         self.update_view()
 
-        # Ja sāk dators, uzreiz izdara gājienu
+        # Ja pirmais sāk dators, tad dators izdara pirmo gājienu
         if self.state["turn"] == "computer":
             self.root.after(200, self.computer_move)
 
@@ -95,13 +106,13 @@ class App:
 
         self.lbl_info.config(text=text)
 
-        # Ja spēle beigusies, pogas izslēdzam
+        # Ja spēle ir beigusies
         if is_game_over(self.state):
             self.set_buttons_enabled(False)
             messagebox.showinfo("Spēle beigusies", winner_text(self.state))
             return
 
-        # Ja gājiens ir cilvēkam, pogas ieslēdzam
+        # Ja gājiens ir cilvēkam
         if self.state["turn"] == "human":
             self.set_buttons_enabled(True)
         else:
@@ -111,19 +122,19 @@ class App:
         if self.state is None:
             return
 
-        # Cilvēks var spiest pogas tikai savā gājienā
         if self.state["turn"] != "human":
             return
 
-        # Izpildām gājienu
+        # Cilvēks izdara gājienu
         self.state = apply_move(self.state, take)
 
         # Atjaunojam skatu
         self.update_view()
 
-        # Ja pēc gājiena nav beigas un tagad ir datora gājiens, lai dators spēlē
-        if self.state is not None and (not is_game_over(self.state)) and self.state["turn"] == "computer":
-            self.root.after(200, self.computer_move)
+        # Ja tagad gājiens ir datoram, lai dators spēlē
+        if self.state is not None and not is_game_over(self.state):
+            if self.state["turn"] == "computer":
+                self.root.after(200, self.computer_move)
 
     def computer_move(self):
         if self.state is None:
@@ -137,7 +148,7 @@ class App:
 
         start_time = time.time()
 
-        # Izvēlamies gājienu pēc izvēlētā algoritma
+        # Izvēlamies algoritmu
         if algo == "Minimax":
             move, value, nodes = choose_move_minimax(self.state, depth)
         else:
@@ -146,7 +157,7 @@ class App:
         end_time = time.time()
         ms = int((end_time - start_time) * 1000)
 
-        # Ja nav gājiena, vienkārši beidzam
+        # Ja nav iespējama gājiena
         if move is None:
             self.update_view()
             return
@@ -154,7 +165,6 @@ class App:
         # Dators izdara gājienu
         self.state = apply_move(self.state, move)
 
-        # Pievienojam informāciju tekstā (vienkārši ar messagebox)
         messagebox.showinfo(
             "Datora gājiens",
             f"Dators paņēma: {move}\nNovērtējums: {value}\nVirsotnes: {nodes}\nLaiks: {ms} ms"

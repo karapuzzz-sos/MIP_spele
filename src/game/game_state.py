@@ -1,6 +1,12 @@
-# Funkcija izveido jaunu spēles stāvokli 
+# Funkcija izveido sākuma spēles stāvokli
 def create_state(stones, starting_player):
-    # Izveidojam tukšu vārdnīcu
+
+    # Pārbaudām vai akmeņu skaits ir diapazonā 50–70
+    if stones < 50 or stones > 70:
+        print("Kļūda: akmeņu skaitam jābūt no 50 līdz 70")
+        return None
+
+    # Izveidojam spēles stāvokļa vārdnīcu
     state = {}
 
     # Akmeņu skaits uz galda
@@ -18,8 +24,8 @@ def create_state(stones, starting_player):
     # Datora punkti
     state["computer_points"] = 0
 
-    # Kurš ir gājienā: "human" vai "computer"
+    # Kurš sāk spēli
     state["turn"] = starting_player
 
-    # Atgriežam stāvokli
+    # Atgriežam izveidoto stāvokli
     return state
