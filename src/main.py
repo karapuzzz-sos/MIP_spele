@@ -1,4 +1,4 @@
-from gui.gui import start_gui
+from src.gui.gui import start_gui
 
 if __name__ == "__main__":
     start_gui()

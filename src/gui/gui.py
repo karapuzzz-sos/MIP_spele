@@ -1,17 +1,17 @@
 import time
 import tkinter as tk
 
-from game.game_state import create_state
-from game.game_logic import apply_move, is_game_over, final_scores, winner_text
-from algorithms.minimax import choose_move_minimax
-from algorithms.alpha_beta import choose_move_alpha_beta
-from algorithms.test.test_runer import run_algorithm_tests, format_test_results
+from src.game.game_state import create_state
+from src.game.game_logic import apply_move, is_game_over, final_scores, winner_text
+from src.algorithms.minimax import choose_move_minimax
+from src.algorithms.alpha_beta import choose_move_alpha_beta
+from src.algorithms.test.test_runer import run_algorithm_tests, format_test_results
 
 class App:
     def __init__(self, root):
         self.root = root
         self.root.title("MI Spēle - Akmeņu spēle")
-        self.root.geometry("1100x700")
+        self.root.geometry("1100x900")
         self.root.resizable(False, False)
 
         # Spēles stāvoklis
@@ -59,13 +59,8 @@ class App:
         tk.Label(settings_frame, text="Dziļums:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
         tk.Spinbox(settings_frame, from_=1, to=12, textvariable=self.var_depth, width=8).grid(row=3, column=1, padx=5, pady=5)
 
-        tk.Button(settings_frame, text="Sākt spēli", width=15, command=self.start_game).grid(row=2, column=0, padx=5, pady=10)
-        tk.Button(settings_frame, text="Restart", width=15, command=self.reset_game).grid(row=2, column=1, padx=5, pady=10)
-        tk.Button(settings_frame, text="Testi", width=15, command=self.open_test_window).grid(row=2, column=2, padx=5, pady=10)
-
-   
         move_frame = tk.LabelFrame(left_frame, text="Cilvēka gājiens", padx=10, pady=10)
-        move_frame.pack(fill="x")
+        move_frame.pack(fill="x", pady=(0, 10))
 
         tk.Label(move_frame, text="Izvēlies, cik akmeņus paņemt:").pack(anchor="w", pady=(0, 8))
 
@@ -93,6 +88,14 @@ class App:
         )
         self.btn_make_move.pack(pady=10)
 
+
+        actions_frame = tk.LabelFrame(left_frame, text="Darbības", padx=10, pady=10)
+        actions_frame.pack(fill="x", pady=(0, 10))
+
+        tk.Button(actions_frame, text="Sākt spēli", width=18, command=self.start_game).pack(pady=5)
+        tk.Button(actions_frame, text="Restart", width=18, command=self.reset_game).pack(pady=5)
+        tk.Button(actions_frame, text="Testi", width=18, command=self.open_test_window).pack(pady=5)
+
     
         info_frame = tk.LabelFrame(right_frame, text="Spēles informācija", padx=10, pady=10)
         info_frame.pack(fill="x", pady=(0, 10))
@@ -108,7 +111,7 @@ class App:
         )
         self.lbl_info.pack(fill="x", padx=5, pady=5)
 
-   
+
         ai_frame = tk.LabelFrame(right_frame, text="Datora pēdējā gājiena informācija", padx=10, pady=10)
         ai_frame.pack(fill="x", pady=(0, 10))
 
@@ -122,7 +125,7 @@ class App:
         )
         self.lbl_ai_info.pack(fill="x", padx=5, pady=5)
 
-      
+
         history_frame = tk.LabelFrame(right_frame, text="Datora gājienu vēsture", padx=10, pady=10)
         history_frame.pack(fill="both", expand=True)
 
@@ -141,7 +144,7 @@ class App:
 
         # Sākumā poga izslēgta
         self.set_buttons_enabled(False)
-    
+
     def set_buttons_enabled(self, enabled):
         state = "normal" if enabled else "disabled"
         self.btn_make_move.config(state=state)
@@ -232,7 +235,7 @@ class App:
         if self.state is not None and not is_game_over(self.state):
             if self.state["turn"] == "computer":
                 self.root.after(300, self.computer_move)
-    
+
     def computer_move(self):
         if self.state is None:
             return
@@ -277,26 +280,22 @@ class App:
         self.history_listbox.see(tk.END)
 
         self.update_view()
+
     def open_test_window(self):
-        # Izveidojam jaunu logu
         test_window = tk.Toplevel(self.root)
         test_window.title("Algoritmu testu rezultāti")
         test_window.geometry("900x700")
 
-        # Teksta lauks rezultātiem
         text_widget = tk.Text(test_window, wrap="word", font=("Consolas", 10))
         text_widget.pack(side="left", fill="both", expand=True)
 
-        # Scrollbar
         scrollbar = tk.Scrollbar(test_window, command=text_widget.yview)
         scrollbar.pack(side="right", fill="y")
         text_widget.config(yscrollcommand=scrollbar.set)
 
-        # Parādām, ka testi tiek veikti
         text_widget.insert(tk.END, "Notiek Minimax testu izpilde...\n")
         test_window.update()
 
-        # Minimax testi
         minimax_results = run_algorithm_tests("Minimax")
         minimax_text = format_test_results(minimax_results, "Minimax")
 
@@ -307,11 +306,10 @@ class App:
         text_widget.insert(tk.END, "Notiek Alpha-Beta testu izpilde...\n")
         test_window.update()
 
-        # Alpha-Beta testi
         alphabeta_results = run_algorithm_tests("AlphaBeta")
         alphabeta_text = format_test_results(alphabeta_results, "Alpha-Beta")
 
-        text_widget.insert(tk.END, alphabeta_text)    
+        text_widget.insert(tk.END, alphabeta_text)
 
 def start_gui():
     root = tk.Tk()

@@ -1,9 +1,9 @@
 import time
 
-from game.game_state import create_state
-from game.game_logic import apply_move, is_game_over, winner_text
-from algorithms.minimax import choose_move_minimax
-from algorithms.alpha_beta import choose_move_alpha_beta
+from src.game.game_state import create_state
+from src.game.game_logic import apply_move, is_game_over, winner_text
+from src.algorithms.minimax import choose_move_minimax
+from src.algorithms.alpha_beta import choose_move_alpha_beta
 
 
 # Funkcija, kas izvēlas algoritmu

@@ -1,5 +1,5 @@
-from game.game_logic import possible_moves, apply_move, is_game_over
-from algorithms.heuristic import heuristic
+from src.game.game_logic import possible_moves, apply_move, is_game_over
+from src.algorithms.heuristic import heuristic
 
 
 def minimax_value(state, depth):
