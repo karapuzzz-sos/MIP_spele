@@ -1,84 +1,181 @@
 import time
 import tkinter as tk
-from tkinter import messagebox
 
 from game.game_state import create_state
 from game.game_logic import apply_move, is_game_over, final_scores, winner_text
 from algorithms.minimax import choose_move_minimax
 from algorithms.alpha_beta import choose_move_alpha_beta
-
+from algorithms.test.test_runer import run_algorithm_tests, format_test_results
 
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("MI Spēle (akmeņi)")
+        self.root.title("MI Spēle - Akmeņu spēle")
+        self.root.geometry("1100x700")
+        self.root.resizable(False, False)
 
-        # Spēles stāvoklis (sākumā nav)
+        # Spēles stāvoklis
         self.state = None
 
-        # UI mainīgie
+        # Mainīgie interfeisam
         self.var_stones = tk.IntVar(value=60)
         self.var_algo = tk.StringVar(value="Minimax")
         self.var_starter = tk.StringVar(value="human")
         self.var_depth = tk.IntVar(value=6)
+        self.var_take = tk.IntVar(value=2)
 
-        # Augša: iestatījumi
-        frm = tk.Frame(root)
-        frm.pack(padx=10, pady=10)
+        # Datora informācija
+        self.last_ai_info = "Dators vēl nav veicis gājienu"
+        self.ai_move_count = 0
 
-        tk.Label(frm, text="Sākuma akmeņi (50-70):").grid(row=0, column=0, sticky="w")
-        tk.Spinbox(frm, from_=50, to=70, textvariable=self.var_stones, width=5).grid(row=0, column=1, sticky="w")
+        # Virsraksts
+        title_label = tk.Label(root, text="Akmeņu spēle", font=("Arial", 18, "bold"))
+        title_label.pack(pady=10)
 
-        tk.Label(frm, text="Kurš sāk:").grid(row=0, column=2, sticky="w", padx=(10, 0))
-        tk.OptionMenu(frm, self.var_starter, "human", "computer").grid(row=0, column=3, sticky="w")
+        # Galvenais rāmis
+        main_frame = tk.Frame(root)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        tk.Label(frm, text="Algoritms:").grid(row=1, column=0, sticky="w")
-        tk.OptionMenu(frm, self.var_algo, "Minimax", "AlphaBeta").grid(row=1, column=1, sticky="w")
+        # Kreisā un labā kolonna
+        left_frame = tk.Frame(main_frame)
+        left_frame.pack(side="left", fill="y", padx=(0, 10))
 
-        tk.Label(frm, text="Dziļums:").grid(row=1, column=2, sticky="w", padx=(10, 0))
-        tk.Spinbox(frm, from_=1, to=12, textvariable=self.var_depth, width=5).grid(row=1, column=3, sticky="w")
+        right_frame = tk.Frame(main_frame)
+        right_frame.pack(side="left", fill="both", expand=True)
 
-        tk.Button(frm, text="Sākt spēli", command=self.start_game).grid(row=2, column=0, pady=(8, 0), sticky="we")
-        tk.Button(frm, text="Restart", command=self.reset_game).grid(row=2, column=1, pady=(8, 0), sticky="we")
 
-        # Vidus: informācija
-        self.lbl_info = tk.Label(root, text="Nospied 'Sākt spēli'", justify="left")
-        self.lbl_info.pack(padx=10, pady=10, anchor="w")
+        settings_frame = tk.LabelFrame(left_frame, text="Spēles iestatījumi", padx=10, pady=10)
+        settings_frame.pack(fill="x", pady=(0, 10))
 
-        # Apakša: gājienu pogas
-        frm2 = tk.Frame(root)
-        frm2.pack(padx=10, pady=10)
+        tk.Label(settings_frame, text="Sākuma akmeņi (50-70):").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        tk.Spinbox(settings_frame, from_=50, to=70, textvariable=self.var_stones, width=8).grid(row=0, column=1, padx=5, pady=5)
 
-        self.btn_take2 = tk.Button(frm2, text="Paņemt 2", width=12, command=lambda: self.human_move(2))
-        self.btn_take3 = tk.Button(frm2, text="Paņemt 3", width=12, command=lambda: self.human_move(3))
-        self.btn_take2.grid(row=0, column=0, padx=5)
-        self.btn_take3.grid(row=0, column=1, padx=5)
+        tk.Label(settings_frame, text="Kurš sāk:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        tk.OptionMenu(settings_frame, self.var_starter, "human", "computer").grid(row=1, column=1, padx=5, pady=5)
 
-        # Sākumā pogas izslēgtas
+        tk.Label(settings_frame, text="Algoritms:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        tk.OptionMenu(settings_frame, self.var_algo, "Minimax", "AlphaBeta").grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Label(settings_frame, text="Dziļums:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        tk.Spinbox(settings_frame, from_=1, to=12, textvariable=self.var_depth, width=8).grid(row=3, column=1, padx=5, pady=5)
+
+        tk.Button(settings_frame, text="Sākt spēli", width=15, command=self.start_game).grid(row=4, column=0, padx=5, pady=10)
+        tk.Button(settings_frame, text="Restart", width=15, command=self.reset_game).grid(row=4, column=1, padx=5, pady=10)
+        tk.Button(settings_frame, text="Testi", width=15, command=self.open_test_window).grid(row=4, column=2, padx=5, pady=10)
+
+   
+        move_frame = tk.LabelFrame(left_frame, text="Cilvēka gājiens", padx=10, pady=10)
+        move_frame.pack(fill="x")
+
+        tk.Label(move_frame, text="Izvēlies, cik akmeņus paņemt:").pack(anchor="w", pady=(0, 8))
+
+        tk.Radiobutton(
+            move_frame,
+            text="Paņemt 2 akmeņus",
+            variable=self.var_take,
+            value=2,
+            font=("Arial", 10)
+        ).pack(anchor="w")
+
+        tk.Radiobutton(
+            move_frame,
+            text="Paņemt 3 akmeņus",
+            variable=self.var_take,
+            value=3,
+            font=("Arial", 10)
+        ).pack(anchor="w")
+
+        self.btn_make_move = tk.Button(
+            move_frame,
+            text="Izpildīt gājienu",
+            width=18,
+            command=self.make_human_move
+        )
+        self.btn_make_move.pack(pady=10)
+
+    
+        info_frame = tk.LabelFrame(right_frame, text="Spēles informācija", padx=10, pady=10)
+        info_frame.pack(fill="x", pady=(0, 10))
+
+        self.lbl_info = tk.Label(
+            info_frame,
+            text="Nospied 'Sākt spēli'",
+            justify="left",
+            anchor="nw",
+            font=("Consolas", 11),
+            width=55,
+            height=12
+        )
+        self.lbl_info.pack(fill="x", padx=5, pady=5)
+
+   
+        ai_frame = tk.LabelFrame(right_frame, text="Datora pēdējā gājiena informācija", padx=10, pady=10)
+        ai_frame.pack(fill="x", pady=(0, 10))
+
+        self.lbl_ai_info = tk.Label(
+            ai_frame,
+            text=self.last_ai_info,
+            justify="left",
+            anchor="w",
+            font=("Arial", 10),
+            width=70
+        )
+        self.lbl_ai_info.pack(fill="x", padx=5, pady=5)
+
+      
+        history_frame = tk.LabelFrame(right_frame, text="Datora gājienu vēsture", padx=10, pady=10)
+        history_frame.pack(fill="both", expand=True)
+
+        self.history_listbox = tk.Listbox(
+            history_frame,
+            height=12,
+            font=("Arial", 10)
+        )
+        self.history_listbox.pack(side="left", fill="both", expand=True)
+
+        history_scrollbar = tk.Scrollbar(history_frame, orient="vertical")
+        history_scrollbar.pack(side="right", fill="y")
+
+        self.history_listbox.config(yscrollcommand=history_scrollbar.set)
+        history_scrollbar.config(command=self.history_listbox.yview)
+
+        # Sākumā poga izslēgta
         self.set_buttons_enabled(False)
-
+    
     def set_buttons_enabled(self, enabled):
         state = "normal" if enabled else "disabled"
-        self.btn_take2.config(state=state)
-        self.btn_take3.config(state=state)
+        self.btn_make_move.config(state=state)
 
     def start_game(self):
         stones = int(self.var_stones.get())
         starter = self.var_starter.get()
 
-        # Izveidojam sākuma stāvokli
         self.state = create_state(stones, starter)
 
-        # Atjaunojam skatu
+        if self.state is None:
+            self.lbl_info.config(text="Kļūda: akmeņu skaitam jābūt no 50 līdz 70")
+            self.lbl_ai_info.config(text="Spēle netika sākta")
+            self.set_buttons_enabled(False)
+            return
+
+        self.last_ai_info = "Dators vēl nav veicis gājienu"
+        self.lbl_ai_info.config(text=self.last_ai_info)
+
+        self.history_listbox.delete(0, tk.END)
+        self.ai_move_count = 0
+
         self.update_view()
 
-        # Ja sāk dators, uzreiz izdara gājienu
         if self.state["turn"] == "computer":
-            self.root.after(200, self.computer_move)
+            self.root.after(300, self.computer_move)
 
     def reset_game(self):
         self.state = None
+        self.last_ai_info = "Dators vēl nav veicis gājienu"
         self.lbl_info.config(text="Nospied 'Sākt spēli'")
+        self.lbl_ai_info.config(text=self.last_ai_info)
+        self.history_listbox.delete(0, tk.END)
+        self.ai_move_count = 0
         self.set_buttons_enabled(False)
 
     def update_view(self):
@@ -88,43 +185,54 @@ class App:
         h, c = final_scores(self.state)
 
         text = ""
-        text += f"Uz galda: {self.state['stones_left']} akmeņi\n"
-        text += f"Cilvēks: punkti={self.state['human_points']} paņemti={self.state['human_taken']} gala={h}\n"
-        text += f"Dators: punkti={self.state['computer_points']} paņemti={self.state['computer_taken']} gala={c}\n"
-        text += f"Gājiens: {self.state['turn']}\n"
+        text += f"Uz galda: {self.state['stones_left']} akmeņi\n\n"
+        text += f"Cilvēks:\n"
+        text += f"  punkti = {self.state['human_points']}\n"
+        text += f"  paņemtie akmeņi = {self.state['human_taken']}\n"
+        text += f"  gala rezultāts = {h}\n\n"
+        text += f"Dators:\n"
+        text += f"  punkti = {self.state['computer_points']}\n"
+        text += f"  paņemtie akmeņi = {self.state['computer_taken']}\n"
+        text += f"  gala rezultāts = {c}\n\n"
+
+        if is_game_over(self.state):
+            result = winner_text(self.state)
+            text += "Spēle ir beigusies\n"
+            text += f"Uzvarētājs: {result}\n"
+            text += "\nLai sāktu jaunu spēli, nospied pogu 'Restart'"
+            self.set_buttons_enabled(False)
+            self.lbl_ai_info.config(text=f"Spēles rezultāts: {result}")
+        else:
+            text += f"Tagad gājiens: {self.state['turn']}"
+            if self.state["turn"] == "human":
+                self.set_buttons_enabled(True)
+            else:
+                self.set_buttons_enabled(False)
 
         self.lbl_info.config(text=text)
 
-        # Ja spēle beigusies, pogas izslēdzam
-        if is_game_over(self.state):
-            self.set_buttons_enabled(False)
-            messagebox.showinfo("Spēle beigusies", winner_text(self.state))
-            return
-
-        # Ja gājiens ir cilvēkam, pogas ieslēdzam
-        if self.state["turn"] == "human":
-            self.set_buttons_enabled(True)
-        else:
-            self.set_buttons_enabled(False)
+    def make_human_move(self):
+        take = self.var_take.get()
+        self.human_move(take)
 
     def human_move(self, take):
         if self.state is None:
             return
 
-        # Cilvēks var spiest pogas tikai savā gājienā
         if self.state["turn"] != "human":
             return
 
-        # Izpildām gājienu
         self.state = apply_move(self.state, take)
 
-        # Atjaunojam skatu
+        self.last_ai_info = f"Cilvēks paņēma: {take}"
+        self.lbl_ai_info.config(text=self.last_ai_info)
+
         self.update_view()
 
-        # Ja pēc gājiena nav beigas un tagad ir datora gājiens, lai dators spēlē
-        if self.state is not None and (not is_game_over(self.state)) and self.state["turn"] == "computer":
-            self.root.after(200, self.computer_move)
-
+        if self.state is not None and not is_game_over(self.state):
+            if self.state["turn"] == "computer":
+                self.root.after(300, self.computer_move)
+    
     def computer_move(self):
         if self.state is None:
             return
@@ -137,7 +245,6 @@ class App:
 
         start_time = time.time()
 
-        # Izvēlamies gājienu pēc izvēlētā algoritma
         if algo == "Minimax":
             move, value, nodes = choose_move_minimax(self.state, depth)
         else:
@@ -146,23 +253,65 @@ class App:
         end_time = time.time()
         ms = int((end_time - start_time) * 1000)
 
-        # Ja nav gājiena, vienkārši beidzam
         if move is None:
+            self.last_ai_info = "Dators nevar veikt gājienu"
+            self.lbl_ai_info.config(text=self.last_ai_info)
             self.update_view()
             return
 
-        # Dators izdara gājienu
         self.state = apply_move(self.state, move)
 
-        # Pievienojam informāciju tekstā (vienkārši ar messagebox)
-        messagebox.showinfo(
-            "Datora gājiens",
-            f"Dators paņēma: {move}\nNovērtējums: {value}\nVirsotnes: {nodes}\nLaiks: {ms} ms"
+        self.last_ai_info = (
+            f"Dators paņēma: {move} | "
+            f"Novērtējums: {value} | "
+            f"Virsotnes: {nodes} | "
+            f"Laiks: {ms} ms"
         )
+        self.lbl_ai_info.config(text=self.last_ai_info)
 
-        # Atjaunojam skatu
+        self.ai_move_count = self.ai_move_count + 1
+        self.history_listbox.insert(
+            tk.END,
+            f"{self.ai_move_count}. gājiens -> paņēma {move}, vērtība {value}, virsotnes {nodes}, laiks {ms} ms"
+        )
+        self.history_listbox.see(tk.END)
+
         self.update_view()
+    def open_test_window(self):
+        # Izveidojam jaunu logu
+        test_window = tk.Toplevel(self.root)
+        test_window.title("Algoritmu testu rezultāti")
+        test_window.geometry("900x700")
 
+        # Teksta lauks rezultātiem
+        text_widget = tk.Text(test_window, wrap="word", font=("Consolas", 10))
+        text_widget.pack(side="left", fill="both", expand=True)
+
+        # Scrollbar
+        scrollbar = tk.Scrollbar(test_window, command=text_widget.yview)
+        scrollbar.pack(side="right", fill="y")
+        text_widget.config(yscrollcommand=scrollbar.set)
+
+        # Parādām, ka testi tiek veikti
+        text_widget.insert(tk.END, "Notiek Minimax testu izpilde...\n")
+        test_window.update()
+
+        # Minimax testi
+        minimax_results = run_algorithm_tests("Minimax")
+        minimax_text = format_test_results(minimax_results, "Minimax")
+
+        text_widget.delete("1.0", tk.END)
+        text_widget.insert(tk.END, minimax_text)
+        text_widget.insert(tk.END, "\n\n")
+
+        text_widget.insert(tk.END, "Notiek Alpha-Beta testu izpilde...\n")
+        test_window.update()
+
+        # Alpha-Beta testi
+        alphabeta_results = run_algorithm_tests("AlphaBeta")
+        alphabeta_text = format_test_results(alphabeta_results, "Alpha-Beta")
+
+        text_widget.insert(tk.END, alphabeta_text)
 
 def start_gui():
     root = tk.Tk()
