@@ -59,9 +59,9 @@ class App:
         tk.Label(settings_frame, text="Dziļums:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
         tk.Spinbox(settings_frame, from_=1, to=12, textvariable=self.var_depth, width=8).grid(row=3, column=1, padx=5, pady=5)
 
-        tk.Button(settings_frame, text="Sākt spēli", width=15, command=self.start_game).grid(row=4, column=0, padx=5, pady=10)
-        tk.Button(settings_frame, text="Restart", width=15, command=self.reset_game).grid(row=4, column=1, padx=5, pady=10)
-        tk.Button(settings_frame, text="Testi", width=15, command=self.open_test_window).grid(row=4, column=2, padx=5, pady=10)
+        tk.Button(settings_frame, text="Sākt spēli", width=15, command=self.start_game).grid(row=2, column=0, padx=5, pady=10)
+        tk.Button(settings_frame, text="Restart", width=15, command=self.reset_game).grid(row=2, column=1, padx=5, pady=10)
+        tk.Button(settings_frame, text="Testi", width=15, command=self.open_test_window).grid(row=2, column=2, padx=5, pady=10)
 
    
         move_frame = tk.LabelFrame(left_frame, text="Cilvēka gājiens", padx=10, pady=10)
@@ -277,7 +277,41 @@ class App:
         self.history_listbox.see(tk.END)
 
         self.update_view()
+    def open_test_window(self):
+        # Izveidojam jaunu logu
+        test_window = tk.Toplevel(self.root)
+        test_window.title("Algoritmu testu rezultāti")
+        test_window.geometry("900x700")
 
+        # Teksta lauks rezultātiem
+        text_widget = tk.Text(test_window, wrap="word", font=("Consolas", 10))
+        text_widget.pack(side="left", fill="both", expand=True)
+
+        # Scrollbar
+        scrollbar = tk.Scrollbar(test_window, command=text_widget.yview)
+        scrollbar.pack(side="right", fill="y")
+        text_widget.config(yscrollcommand=scrollbar.set)
+
+        # Parādām, ka testi tiek veikti
+        text_widget.insert(tk.END, "Notiek Minimax testu izpilde...\n")
+        test_window.update()
+
+        # Minimax testi
+        minimax_results = run_algorithm_tests("Minimax")
+        minimax_text = format_test_results(minimax_results, "Minimax")
+
+        text_widget.delete("1.0", tk.END)
+        text_widget.insert(tk.END, minimax_text)
+        text_widget.insert(tk.END, "\n\n")
+
+        text_widget.insert(tk.END, "Notiek Alpha-Beta testu izpilde...\n")
+        test_window.update()
+
+        # Alpha-Beta testi
+        alphabeta_results = run_algorithm_tests("AlphaBeta")
+        alphabeta_text = format_test_results(alphabeta_results, "Alpha-Beta")
+
+        text_widget.insert(tk.END, alphabeta_text)    
 
 def start_gui():
     root = tk.Tk()
