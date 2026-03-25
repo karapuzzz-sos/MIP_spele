@@ -13,36 +13,28 @@ class App:
         self.root.title("MI Spēle - Akmeņu spēle")
         self.root.geometry("1100x900")
         self.root.resizable(False, False)
-
         # Spēles stāvoklis
         self.state = None
-
         # Mainīgie interfeisam
         self.var_stones = tk.IntVar(value=60)
         self.var_algo = tk.StringVar(value="Minimax")
         self.var_starter = tk.StringVar(value="human")
         self.var_depth = tk.IntVar(value=6)
         self.var_take = tk.IntVar(value=2)
-
         # Datora informācija
         self.last_ai_info = "Dators vēl nav veicis gājienu"
         self.ai_move_count = 0
-
         # Virsraksts
         title_label = tk.Label(root, text="Akmeņu spēle", font=("Arial", 18, "bold"))
         title_label.pack(pady=10)
-
         # Galvenais rāmis
         main_frame = tk.Frame(root)
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
         # Kreisā un labā kolonna
         left_frame = tk.Frame(main_frame)
         left_frame.pack(side="left", fill="y", padx=(0, 10))
-
         right_frame = tk.Frame(main_frame)
         right_frame.pack(side="left", fill="both", expand=True)
-
 
         settings_frame = tk.LabelFrame(left_frame, text="Spēles iestatījumi", padx=10, pady=10)
         settings_frame.pack(fill="x", pady=(0, 10))
@@ -63,7 +55,6 @@ class App:
         move_frame.pack(fill="x", pady=(0, 10))
 
         tk.Label(move_frame, text="Izvēlies, cik akmeņus paņemt:").pack(anchor="w", pady=(0, 8))
-
         tk.Radiobutton(
             move_frame,
             text="Paņemt 2 akmeņus",
@@ -88,7 +79,6 @@ class App:
         )
         self.btn_make_move.pack(pady=10)
 
-
         actions_frame = tk.LabelFrame(left_frame, text="Darbības", padx=10, pady=10)
         actions_frame.pack(fill="x", pady=(0, 10))
 
@@ -96,7 +86,6 @@ class App:
         tk.Button(actions_frame, text="Restart", width=18, command=self.reset_game).pack(pady=5)
         tk.Button(actions_frame, text="Testi", width=18, command=self.open_test_window).pack(pady=5)
 
-    
         info_frame = tk.LabelFrame(right_frame, text="Spēles informācija", padx=10, pady=10)
         info_frame.pack(fill="x", pady=(0, 10))
 
@@ -111,7 +100,6 @@ class App:
         )
         self.lbl_info.pack(fill="x", padx=5, pady=5)
 
-
         ai_frame = tk.LabelFrame(right_frame, text="Datora pēdējā gājiena informācija", padx=10, pady=10)
         ai_frame.pack(fill="x", pady=(0, 10))
 
@@ -124,7 +112,6 @@ class App:
             width=70
         )
         self.lbl_ai_info.pack(fill="x", padx=5, pady=5)
-
 
         history_frame = tk.LabelFrame(right_frame, text="Datora gājienu vēsture", padx=10, pady=10)
         history_frame.pack(fill="both", expand=True)
@@ -141,7 +128,6 @@ class App:
 
         self.history_listbox.config(yscrollcommand=history_scrollbar.set)
         history_scrollbar.config(command=self.history_listbox.yview)
-
         # Sākumā poga izslēgta
         self.set_buttons_enabled(False)
 
@@ -166,7 +152,6 @@ class App:
 
         self.history_listbox.delete(0, tk.END)
         self.ai_move_count = 0
-
         self.update_view()
 
         if self.state["turn"] == "computer":
@@ -221,15 +206,11 @@ class App:
     def human_move(self, take):
         if self.state is None:
             return
-
         if self.state["turn"] != "human":
             return
-
         self.state = apply_move(self.state, take)
-
         self.last_ai_info = f"Cilvēks paņēma: {take}"
         self.lbl_ai_info.config(text=self.last_ai_info)
-
         self.update_view()
 
         if self.state is not None and not is_game_over(self.state):
@@ -239,20 +220,15 @@ class App:
     def computer_move(self):
         if self.state is None:
             return
-
         if self.state["turn"] != "computer":
             return
-
         depth = int(self.var_depth.get())
         algo = self.var_algo.get()
-
         start_time = time.time()
-
         if algo == "Minimax":
             move, value, nodes = choose_move_minimax(self.state, depth)
         else:
             move, value, nodes = choose_move_alpha_beta(self.state, depth)
-
         end_time = time.time()
         ms = int((end_time - start_time) * 1000)
 
@@ -261,9 +237,7 @@ class App:
             self.lbl_ai_info.config(text=self.last_ai_info)
             self.update_view()
             return
-
         self.state = apply_move(self.state, move)
-
         self.last_ai_info = (
             f"Dators paņēma: {move} | "
             f"Novērtējums: {value} | "
@@ -271,44 +245,34 @@ class App:
             f"Laiks: {ms} ms"
         )
         self.lbl_ai_info.config(text=self.last_ai_info)
-
         self.ai_move_count = self.ai_move_count + 1
         self.history_listbox.insert(
             tk.END,
             f"{self.ai_move_count}. gājiens -> paņēma {move}, vērtība {value}, virsotnes {nodes}, laiks {ms} ms"
         )
         self.history_listbox.see(tk.END)
-
         self.update_view()
 
     def open_test_window(self):
         test_window = tk.Toplevel(self.root)
         test_window.title("Algoritmu testu rezultāti")
         test_window.geometry("900x700")
-
         text_widget = tk.Text(test_window, wrap="word", font=("Consolas", 10))
         text_widget.pack(side="left", fill="both", expand=True)
-
         scrollbar = tk.Scrollbar(test_window, command=text_widget.yview)
         scrollbar.pack(side="right", fill="y")
         text_widget.config(yscrollcommand=scrollbar.set)
-
         text_widget.insert(tk.END, "Notiek Minimax testu izpilde...\n")
         test_window.update()
-
         minimax_results = run_algorithm_tests("Minimax")
         minimax_text = format_test_results(minimax_results, "Minimax")
-
         text_widget.delete("1.0", tk.END)
         text_widget.insert(tk.END, minimax_text)
         text_widget.insert(tk.END, "\n\n")
-
         text_widget.insert(tk.END, "Notiek Alpha-Beta testu izpilde...\n")
         test_window.update()
-
         alphabeta_results = run_algorithm_tests("AlphaBeta")
         alphabeta_text = format_test_results(alphabeta_results, "Alpha-Beta")
-
         text_widget.insert(tk.END, alphabeta_text)
 
 def start_gui():
