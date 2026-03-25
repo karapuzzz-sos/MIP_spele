@@ -94,7 +94,4 @@ vai
 python3 --version
 ```
 
-````
-
-
 
